@@ -1,17 +1,49 @@
 #!/usr/bin/env python3
 """
-OpenClaw 沙箱安全测试综合报告生成器
-用途：整合所有测试结果，生成完整的安全评估报告
+OpenClaw 沙箱安全测试报告生成器
+
+用途：
+    整合所有测试结果，生成完整的安全评估报告
+
+功能：
+    1. 加载网络边界测试结果
+    2. 加载容器隔离测试结果
+    3. 计算综合风险评分
+    4. 生成文本格式报告
+    5. 生成 JSON 格式结果
+
+输出：
+    - openclaw_security_report.txt: 完整文本报告
+    - openclaw_security_results.json: JSON 测试结果
+
+风险评分规则：
+    - Critical 风险: -20 分
+    - High 风险: -10 分
+    - Medium 风险: -5 分
+    - Low 风险: -2 分
+    - 基础分: 100 分
 """
 
 import json
 import time
 from typing import Dict, List
 
+
 class SecurityReportGenerator:
-    """安全报告生成器"""
+    """
+    安全报告生成器
+    
+    用于整合测试结果并生成完整的安全评估报告
+    
+    属性：
+        all_results: 存储所有测试结果的字典
+            - network_boundary: 网络边界测试结果
+            - container_escape: 容器隔离测试结果
+            - summary: 汇总信息
+    """
     
     def __init__(self):
+        """初始化报告生成器，创建空的结果字典"""
         self.all_results: Dict = {
             "network_boundary": None,
             "container_escape": None,
@@ -19,11 +51,40 @@ class SecurityReportGenerator:
         }
     
     def load_test_results(self, test_type: str, results: Dict):
-        """加载测试结果"""
+        """
+        加载测试结果
+        
+        参数：
+            test_type: 测试类型（network_boundary / container_escape）
+            results: 测试结果字典
+        
+        说明：
+            将测试结果存储到 all_results 字典中，
+            供后续报告生成使用
+        """
         self.all_results[test_type] = results
     
     def calculate_risk_score(self) -> int:
-        """计算风险评分 (0-100)"""
+        """
+        计算综合风险评分
+        
+        评分规则：
+            基础分 100 分，根据风险等级扣分：
+            - Critical: -20 分
+            - High: -10 分
+            - Medium: -5 分
+            - Low: -2 分
+        
+        返回：
+            int: 风险评分（0-100）
+        
+        说明：
+            分数越高越安全：
+            - 80-100: 低风险
+            - 60-79: 中风险
+            - 40-59: 高风险
+            - 0-39: 极高风险
+        """
         score = 100  # 满分
         
         # 根据失败测试扣分
@@ -44,7 +105,21 @@ class SecurityReportGenerator:
         return max(0, score)
     
     def get_risk_level(self, score: int) -> str:
-        """获取风险等级"""
+        """
+        根据评分获取风险等级
+        
+        参数：
+            score: 风险评分（0-100）
+        
+        返回：
+            str: 风险等级描述
+        
+        分级标准：
+            - 80-100: 低风险 - 沙箱隔离有效
+            - 60-79: 中风险 - 存在部分隔离缺陷
+            - 40-59: 高风险 - 多项隔离措施失效
+            - 0-39: 极高风险 - 沙箱几乎无隔离效果
+        """
         if score >= 80:
             return "低风险"
         elif score >= 60:
@@ -55,7 +130,21 @@ class SecurityReportGenerator:
             return "极高风险"
     
     def generate_report(self) -> str:
-        """生成完整报告"""
+        """
+        生成完整文本报告
+        
+        报告结构：
+            1. 报告头部信息
+            2. 风险评估摘要
+            3. 详细测试结果
+               - 网络边界测试结果
+               - 容器隔离测试结果
+            4. 修复建议
+            5. 参考资料
+        
+        返回：
+            str: 完整的文本格式报告
+        """
         score = self.calculate_risk_score()
         risk_level = self.get_risk_level(score)
         
@@ -108,7 +197,18 @@ class SecurityReportGenerator:
         return report
     
     def generate_remediation(self) -> str:
-        """生成修复建议"""
+        """
+        生成修复建议
+        
+        内容包括：
+            1. 网络隔离加固配置
+            2. 容器安全加固配置
+            3. OpenClaw 配置加固
+            4. 监控与告警建议
+        
+        返回：
+            str: 修复建议文本
+        """
         remediation = """
 ================================================================================
                             修复建议
@@ -204,7 +304,19 @@ class SecurityReportGenerator:
         return remediation
     
     def save_report(self, filename: str = "security_report.txt"):
-        """保存报告到文件"""
+        """
+        保存报告到文件
+        
+        参数：
+            filename: 报告文件名
+        
+        返回：
+            str: 生成的报告内容
+        
+        说明：
+            调用 generate_report() 生成报告，
+            并写入指定文件
+        """
         report = self.generate_report()
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(report)
@@ -213,10 +325,10 @@ class SecurityReportGenerator:
 
 
 if __name__ == "__main__":
-    # 示例用法
+    # 示例用法：模拟测试结果并生成报告
     generator = SecurityReportGenerator()
     
-    # 模拟加载测试结果
+    # 模拟网络边界测试结果
     network_results = {
         "total": 4,
         "passed": 2,
@@ -229,6 +341,7 @@ if __name__ == "__main__":
         ]
     }
     
+    # 模拟容器隔离测试结果
     container_results = {
         "total": 7,
         "passed": 5,
@@ -244,6 +357,7 @@ if __name__ == "__main__":
         ]
     }
     
+    # 加载结果并生成报告
     generator.load_test_results("network_boundary", network_results)
     generator.load_test_results("container_escape", container_results)
     
