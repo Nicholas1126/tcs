@@ -6,7 +6,7 @@ import sys
 
 def run_helloworld():
     """运行 helloworld 二进制文件"""
-    binary_path = "v1.0/helloworld"
+    binary_path = "helloworld"
     
     # 检查文件是否存在
     if not os.path.exists(binary_path):
